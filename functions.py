@@ -13,7 +13,9 @@ def extract_packages(packages):
     packages = packages.sort_values(["origin", "destination"])
     pkgs = {(row['origin'], row['destination']): row['packages'] for _, row in packages.iterrows()}
     for i in range(N):
-        pkgs[(i, i)] = 0
+        for j in range(N):
+            if (i, j) not in pkgs:
+                pkgs[(i, j)] = 0
     return pkgs
 
 
@@ -52,28 +54,28 @@ f = extract_packages(df_packages)
 d = extract_distances(cities)
 alpha = 0.75
 
-"""obj = sum(f[s][a] for s in range(N) for a in range(N)) + \
-      sum(sum(sum(Z[s][h1][a][h2] * (d[s][h1] + alpha[h1][h2] + d[h2][a]) for h2 in range(N)) for h1 in range(N)) for a
-          in range(N) for s in range(N))
+obj = sum(f[(s, a)] for s in range(N) for a in range(N)) + \
+      sum(Z[s, h1, a, h2] * (d[(s, h1)] + alpha * d[(h1, h2)] + d[(h2, a)])
+          for s in range(N) for a in range(N) for h1 in range(N) for h2 in range(N))
 
 m.setObjective(obj, GRB.MINIMIZE)
 
 # Constraints
 for i in range(N):
-    m.addConstr(Y.sum(i, '*') <= K)
+    m.addConstr(Y.sum(i, '*') <= K, "hubs_constraint")
 
-    m.addConstr(Y.sum(i, '*') == 1)
+    m.addConstr(Y.sum(i, '*') == 1, "city_to_hub_constraint")
 
-    m.addConstr(Z.sum(i, '*', '*', '*') == 1)
+    m.addConstr(Z.sum(i, '*', '*', '*') == 1, "both_constraints")
 
 for i in range(N):
     for j in range(N):
         for k in range(N):
             for l in range(N):
-                m.addConstr(Z[i, j, k, l] <= Y[i, j])
-                m.addConstr(Z[i, j, k, l] <= Y[k, l])
-                m.addConstr(Z[i, j, k, l] <= Y[i, j] + Y[k, l] - 1)
-                m.addConstr(Z[i, j, k, l] >= 0)
+                m.addConstr(Z[i, j, k, l] <= Y[i, j], "c1")
+                m.addConstr(Z[i, j, k, l] <= Y[k, l], "c2")
+                m.addConstr(Z[i, j, k, l] <= Y[i, j] + Y[k, l] - 1, "c3")
+                m.addConstr(Z[i, j, k, l] >= 0, "non_negativity")
 
 # Solve the model
 m.optimize()
@@ -88,4 +90,4 @@ if m.status == GRB.Status.OPTIMAL:
         for j in range(N):
             for k in range(N):
                 for l in range(N):
-                    print(f"Z[{i},{j},{k},{l}] = {Z[i, j, k, l].x}")"""
+                    print(f"Z[{i},{j},{k},{l}] = {Z[i, j, k, l].x}")
