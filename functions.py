@@ -2,14 +2,24 @@ from gurobipy import Model, GRB
 import pandas as pd
 import numpy as np
 
-df_cities = pd.read_csv("files/cities_small.csv")
-df_packages = pd.read_csv("files/packages_small.csv")
 
-cities = df_cities.id.to_list()
-N = len(cities)
+# Guaranteed to get a valid size, since checked before calling this method
+def load_dataframes(size="small"):
+    """
+    :param size: Size of dataframe either small, med or large
+    :return: 2 dataframes containing cities and packages info
+    """
+    df_cities = pd.read_csv(f"files/cities_{size}.csv")
+    df_packages = pd.read_csv(f"files/packages_{size}.csv")
+    return df_cities, df_packages
 
 
-def extract_packages(packages):
+def extract_packages(packages, N):
+    """
+    :param packages: df_packages Dataframe
+    :param N: Number of cities
+    :return: Dictionary of packages values for each city combination
+    """
     packages = packages.sort_values(["origin", "destination"])
     pkgs = {(row['origin'], row['destination']): row['packages'] for _, row in packages.iterrows()}
     for i in range(N):
@@ -19,7 +29,12 @@ def extract_packages(packages):
     return pkgs
 
 
-def extract_distances(cities):
+def extract_distances(df_cities, cities):
+    """
+    :param df_cities: cities dataframe
+    :param cities: list of cities
+    :return: dist dict containing distance for each pair of cities
+    """
     def compute_dist(city1_row, city2_row):
         city1_lat = city1_row.lat.item()
         city1_lon = city1_row.lon.item()
@@ -38,56 +53,56 @@ def extract_distances(cities):
                 dists[(city2, city1)] = curr_dist
     return dists
 
-
-# Initialize a new model
-m = Model()
-
-# Define parameters
-K = 2
-
-# Decision variables
-Y = m.addVars(N, N, vtype=GRB.BINARY, name="Y")
-Z = m.addVars(N, N, N, N, vtype=GRB.BINARY, name="Z")
-
-# Objective function
-f = extract_packages(df_packages)
-d = extract_distances(cities)
-alpha = 0.75
-
-obj = sum(f[(s, a)] for s in range(N) for a in range(N)) + \
-      sum(Z[s, h1, a, h2] * (d[(s, h1)] + alpha * d[(h1, h2)] + d[(h2, a)])
-          for s in range(N) for a in range(N) for h1 in range(N) for h2 in range(N))
-
-m.setObjective(obj, GRB.MINIMIZE)
-
-# Constraints
-for i in range(N):
-    m.addConstr(Y.sum(i, '*') <= K, "hubs_constraint")
-
-    m.addConstr(Y.sum(i, '*') == 1, "city_to_hub_constraint")
-
-    m.addConstr(Z.sum(i, '*', '*', '*') == 1, "both_constraints")
-
-for i in range(N):
-    for j in range(N):
-        for k in range(N):
-            for l in range(N):
-                m.addConstr(Z[i, j, k, l] <= Y[i, j], "c1")
-                m.addConstr(Z[i, j, k, l] <= Y[k, l], "c2")
-                m.addConstr(Z[i, j, k, l] <= Y[i, j] + Y[k, l] - 1, "c3")
-                m.addConstr(Z[i, j, k, l] >= 0, "non_negativity")
-
-# Solve the model
-m.optimize()
-
-# Extract the results if needed
-if m.status == GRB.Status.OPTIMAL:
-    for i in range(N):
-        for j in range(N):
-            print(f"Y[{i},{j}] = {Y[i, j].x}")
-
-    for i in range(N):
-        for j in range(N):
-            for k in range(N):
-                for l in range(N):
-                    print(f"Z[{i},{j},{k},{l}] = {Z[i, j, k, l].x}")
+#
+# # Initialize a new model
+# m = Model()
+#
+# # Define parameters
+# K = 2
+#
+# # Decision variables
+# Y = m.addVars(N, N, vtype=GRB.BINARY, name="Y")
+# Z = m.addVars(N, N, N, N, vtype=GRB.BINARY, name="Z")
+#
+# # Objective function
+# f = extract_packages(df_packages)
+# d = extract_distances(cities)
+# alpha = 0.75
+#
+# # obj = sum(f[(s, a)] for s in range(N) for a in range(N)) + \
+# #       sum(Z[s, h1, a, h2] * (d[(s, h1)] + alpha * d[(h1, h2)] + d[(h2, a)])
+# #           for s in range(N) for a in range(N) for h1 in range(N) for h2 in range(N))
+#
+# m.setObjective(obj, GRB.MINIMIZE)
+#
+# # Constraints
+# for i in range(N):
+#     m.addConstr(Y.sum(i, '*') <= K, "hubs_constraint")
+#
+#     m.addConstr(Y.sum(i, '*') == 1, "city_to_hub_constraint")
+#
+#     m.addConstr(Z.sum(i, '*', '*', '*') == 1, "both_constraints")
+#
+# for i in range(N):
+#     for j in range(N):
+#         for k in range(N):
+#             for l in range(N):
+#                 m.addConstr(Z[i, j, k, l] <= Y[i, j], "c1")
+#                 m.addConstr(Z[i, j, k, l] <= Y[k, l], "c2")
+#                 m.addConstr(Z[i, j, k, l] <= Y[i, j] + Y[k, l] - 1, "c3")
+#                 m.addConstr(Z[i, j, k, l] >= 0, "non_negativity")
+#
+# # Solve the model
+# m.optimize()
+#
+# # Extract the results if needed
+# if m.status == GRB.Status.OPTIMAL:
+#     for i in range(N):
+#         for j in range(N):
+#             print(f"Y[{i},{j}] = {Y[i, j].x}")
+#
+#     for i in range(N):
+#         for j in range(N):
+#             for k in range(N):
+#                 for l in range(N):
+#                     print(f"Z[{i},{j},{k},{l}] = {Z[i, j, k, l].x}")
