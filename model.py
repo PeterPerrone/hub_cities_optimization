@@ -75,6 +75,9 @@ class HubModel:
         print(f'Optimal objective: {self.model.ObjVal}')
         self.model.write('model.sol')
 
+    def get_obj_value(self):
+        return self.model.ObjVal
+
     def get_hubs(self):
         for i in self.cities:
             if self.Y[i, i].X:
@@ -88,6 +91,10 @@ class HubModel:
                     total_c += self.Z[s, h1, a, h2].X * pkgs * (2 - self.Y[h1, s].X - self.Y[h1, h2].X - self.Y[h2, a].X)
         print(f"Cost for this model is {total_c}*c")
         return total_c
+
+    def cost_per_package(self):
+        total_cost = self.calculate_costs()
+        return total_cost / sum(self.f.values())
 
     def save_model(self, name="hub-model"):
         attributes_to_save = {
