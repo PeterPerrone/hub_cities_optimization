@@ -1,5 +1,5 @@
-# import plotly.express as px
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from model import HubModel
 
 
@@ -36,3 +36,120 @@ class Plots:
         plt.grid(True)
         plt.show()
 
+    def plot_hub_and_cities_plotly(self):
+        # Create figure
+        fig = go.Figure()
+
+        # Define colors for hubs, cities, and connections
+        city_color = 'LightSkyBlue'
+        hub_color = 'Salmon'
+        hub_connection_color = 'DarkOrange'  # Color for hub-to-hub connections
+        city_hub_connection_color = 'Blue'  # Color for city-to-hub connections
+
+        # Keep track of whether we've added the hub connection to the legend
+        hub_connection_legend_added = False
+        city_hub_connection_legend_added = False
+
+        # Plot each city
+        for city_row in self.model.df_cities.itertuples():
+            lat = city_row.lat
+            lon = city_row.lon
+            i = city_row.id
+            hub = self.model.Y[i, i].x == 1
+            marker_properties = {
+                'size': 12 if hub else 8,  # Bigger size for hubs
+                'color': hub_color if hub else city_color,
+                'symbol': 'square' if hub else 'circle'  # Square for hubs, circle for cities
+            }
+
+            # Add scatter plot for cities/hubs with text labels
+            fig.add_trace(go.Scatter(
+                x=[lon],
+                y=[lat],
+                mode='markers+text',
+                marker=marker_properties,
+                text=[str(i)],
+                textposition='bottom center',
+                name='Hub' if hub else 'City',
+                showlegend=False
+            ))
+
+        # Add lines for connections after plotting cities to avoid lines over markers
+        for city1_row in self.model.df_cities.itertuples():
+            i = city1_row.id
+            lat1 = city1_row.lat
+            lon1 = city1_row.lon
+            hub1 = self.model.Y[i, i].x == 1
+
+            for city2_row in self.model.df_cities.itertuples():
+                j = city2_row.id
+                if i < j:  # Ensure each pair is only considered once
+                    hub2 = self.model.Y[j, j].x == 1
+                    connected = (self.model.Y[i, j].x or self.model.Y[j, i].x) or (hub1 and hub2)
+                    if connected:
+                        lat2 = city2_row.lat
+                        lon2 = city2_row.lon
+                        # Determine the color of the connection
+                        if hub1 and hub2:
+                            line_color = hub_connection_color
+                            # Add to legend only once for hub connections
+                            if not hub_connection_legend_added:
+                                fig.add_trace(go.Scatter(
+                                    x=[None],
+                                    y=[None],
+                                    mode='lines',
+                                    line=dict(color=line_color),
+                                    name='Hub Connection'
+                                ))
+                                hub_connection_legend_added = True
+                        else:
+                            line_color = city_hub_connection_color
+                            # Add to legend only once for city-to-hub connections
+                            if not city_hub_connection_legend_added:
+                                fig.add_trace(go.Scatter(
+                                    x=[None],
+                                    y=[None],
+                                    mode='lines',
+                                    line=dict(color=line_color),
+                                    name='City-Hub Connection'
+                                ))
+                                city_hub_connection_legend_added = True
+                        # Add the line trace for the connection
+                        fig.add_trace(go.Scatter(
+                            x=[lon1, lon2],
+                            y=[lat1, lat2],
+                            mode='lines',
+                            line=dict(width=1, color=line_color),
+                            showlegend=False
+                        ))
+
+        # Add legend entries manually
+        fig.add_trace(go.Scatter(
+            x=[None],
+            y=[None],
+            mode='markers',
+            marker=dict(size=10, color=city_color),
+            name='City'
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=[None],
+            y=[None],
+            mode='markers',
+            marker=dict(size=10, color=hub_color),
+            name='Hub'
+        ))
+
+        # Set plot layout
+        fig.update_layout(
+            title="Cities and Hub Map",
+            xaxis_title="Longitude",
+            yaxis_title="Latitude",
+            showlegend=True,
+            legend_title_text='Legend',
+            xaxis=dict(showgrid=True, gridwidth=1, gridcolor='LightGray'),
+            yaxis=dict(showgrid=True, gridwidth=1, gridcolor='LightGray')
+        )
+
+        # Show figure
+        fig.show()

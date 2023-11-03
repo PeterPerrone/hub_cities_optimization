@@ -16,3 +16,5 @@ new_hb.get_hubs()
 # P = Plots(hb)
 # P.plot_hub_and_cities()
 b=1
+P = Plots(hb)
+P.plot_hub_and_cities_plotly()
