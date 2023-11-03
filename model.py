@@ -31,8 +31,8 @@ class HubModel:
         obj.__dict__.update(loaded_attributes)
 
         obj.model = gp.read(f"saved_models/{file_to_load}.mps")
-        obj.Y = gp.tupledict({(i,j): obj.model.getVarByName(f'Y[{i},{j}]') for i in obj.cities for j in obj.cities})
-        obj.Z = gp.tupledict({(i,j,k,l): obj.model.getVarByName('Z') for i in obj.cities for j in obj.cities for k in obj.cities for l in obj.cities})
+        obj.Y = gp.tupledict({(i, j): obj.model.getVarByName(f'Y[{i},{j}]') for i in obj.cities for j in obj.cities})
+        obj.Z = gp.tupledict({(i, j, k, l): obj.model.getVarByName(f'Z[{i},{j},{k},{l}]') for i in obj.cities for j in obj.cities for k in obj.cities for l in obj.cities})
         return obj
 
     def create_objective(self):
