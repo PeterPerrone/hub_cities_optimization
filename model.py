@@ -16,20 +16,30 @@ class HubModel:
         self.cities = self.df_cities.id.to_list()
         self.N = len(self.cities)
 
-        self.model = Model(model_name)
+        self.model = gp.Model(model_name)
         self.f = extract_packages(self.df_packages, self.N)
         self.d = extract_distances(self.df_cities, self.cities)
 
         self.Y = None
         self.Z = None
 
+    @classmethod
+    def load_model(cls, file_to_load="hub-model", model_name="Hub-Spoke"):
+        obj = cls.__new__(cls)
+        with open(f"saved_models/{file_to_load}.pkl", 'rb') as file:
+            loaded_attributes = pickle.load(file)
+        obj.__dict__.update(loaded_attributes)
+
+        obj.model = gp.read(f"saved_models/{file_to_load}.mps")
+        obj.Y = gp.tupledict({(i,j): obj.model.getVarByName(f'Y[{i},{j}]') for i in obj.cities for j in obj.cities})
+        obj.Z = gp.tupledict({(i,j,k,l): obj.model.getVarByName('Z') for i in obj.cities for j in obj.cities for k in obj.cities for l in obj.cities})
+        return obj
+
     def create_objective(self):
         self.Y = self.model.addVars(self.N, self.N, vtype=GRB.BINARY, name="Y")
         self.Z = self.model.addVars(self.N, self.N, self.N, self.N, vtype=GRB.BINARY, name="Z")
 
         obj = gp.LinExpr()
-        # for s in self.cities:
-        #     for a in self.cities:
         for (s, a), pkgs in self.f.items():
             for h1 in self.cities:
                 for h2 in self.cities:
@@ -80,12 +90,21 @@ class HubModel:
         return total_c
 
     def save_model(self, name="hub-model"):
-        self.model.write(f"{name}.mps")
+        attributes_to_save = {
+            'K': self.K,
+            'alpha': self.alpha,
+            'df_cities': self.df_cities,
+            'cities': self.cities,
+            'N': self.N,
+            'f': self.f,
+            'd': self.d,
+        }
 
-    def load_model(self, name):
-        self.model.read(f"{name}.mps")
+        with open(f"saved_models/{name}.pkl", 'wb') as file:
+            pickle.dump(attributes_to_save, file)
+
+        self.model.write(f"saved_models/{name}.mps")
 
 
 if __name__ == "__main__":
-
     b = 1
