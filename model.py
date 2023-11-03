@@ -46,9 +46,16 @@ class HubModel:
             for h1 in self.cities:
                 for h2 in self.cities:
                     if self.c:
-                        obj += pkgs * self.Z[s, h1, a, h2] * \
-                               (self.d[(s, h1)] + self.alpha * self.d[(h1, h2)] + self.d[(h2, a) +
-                                self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])])
+                        obj += pkgs * self.Z[s, h1, a, h2] * (
+                               (
+                                       self.d[(s, h1)] +
+                                       self.alpha * self.d[(h1, h2)]
+                                       + self.d[(h2, a)]
+                               ) +
+                               (
+                                       self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
+                               )
+                        )
                     else:
                         obj += pkgs * self.Z[s, h1, a, h2] * \
                                (self.d[(s, h1)] + self.alpha * self.d[(h1, h2)] + self.d[(h2, a)])
