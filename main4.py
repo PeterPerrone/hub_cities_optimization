@@ -1,8 +1,10 @@
 from model import HubModel
 import plotly.graph_objects as go
 
-costs = [.5, 1, 5, 10]
+# costs = [.5, 1, 5, 10]
+costs = [1]
 obj_value = []
+
 
 for c1 in costs:
     print(f"TESTING WITH COST {c1}")

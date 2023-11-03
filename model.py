@@ -44,26 +44,32 @@ class HubModel:
         self.Z = self.model.addVars(self.N, self.N, self.N, self.N, vtype=GRB.BINARY, name="Z")
 
         if self.c:
-            obj = gp.quicksum(pkgs *
-                              gp.quicksum(self.Z[s, h1, a, h2] * (
-                                      (
-                                          self.d[(s, h1)] +
-                                          self.alpha * self.d[(h1, h2)] +
-                                          self.d[(h2, a)]
-                                      ) +
-                                      (
-                                          self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
-                                      )
-                              ) for h1 in self.cities for h2 in self.cities)
-                              for (s, a), pkgs in self.f.items())
+            obj = gp.quicksum(pkgs * (
+                    gp.quicksum(self.Y[s, h1] * self.d[(s, h1)] for h1 in self.cities) +
+                    gp.quicksum(self.Y[a, h2] * self.d[(a, h2)] for h2 in self.cities) +
+                    self.alpha * gp.quicksum(self.Z[s, h1, a, h2] * self.d[(h1, h2)]
+                                             for h1 in self.cities for h2 in self.cities) +
+                    self.c * gp.quicksum(self.Z[s, h1, a, h2] * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
+                                         for h1 in self.cities for h2 in self.cities)
+            ) for (s, a), pkgs in self.f.items())
+            # obj = gp.quicksum(pkgs *
+            #                   gp.quicksum(self.Z[s, h1, a, h2] * (
+            #                           (
+            #                               self.d[(s, h1)] +
+            #                               self.alpha * self.d[(h1, h2)] +
+            #                               self.d[(h2, a)]
+            #                           ) +
+            #                           (
+            #                               self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
+            #                           )
+            #                   ) for h1 in self.cities for h2 in self.cities)
+            #                   for (s, a), pkgs in self.f.items())
         else:
-            obj = gp.quicksum(pkgs *
-                              gp.quicksum(self.Z[s, h1, a, h2] * (
-                                      self.d[(s, h1)] +
-                                      self.alpha * self.d[(h1, h2)] +
-                                      self.d[(h2, a)]
-                              ) for h1 in self.cities for h2 in self.cities)
-                              for (s, a), pkgs in self.f.items())
+            obj = gp.quicksum(pkgs * (
+                gp.quicksum(self.Y[s, h1] * self.d[(s, h1)] for h1 in self.cities) +
+                gp.quicksum(self.Y[a, h2] * self.d[(a, h2)] for h2 in self.cities) +
+                self.alpha * gp.quicksum(self.Z[s, h1, a, h2] * self.d[(h1, h2)] for h1 in self.cities for h2 in self.cities)
+            ) for (s, a), pkgs in self.f.items())
 
         # obj = gp.LinExpr()
         # for (s, a), pkgs in self.f.items():
