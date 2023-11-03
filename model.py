@@ -34,31 +34,55 @@ class HubModel:
 
         obj.model = gp.read(f"saved_models/{file_to_load}.mps")
         obj.Y = gp.tupledict({(i, j): obj.model.getVarByName(f'Y[{i},{j}]') for i in obj.cities for j in obj.cities})
-        obj.Z = gp.tupledict({(i, j, k, l): obj.model.getVarByName(f'Z[{i},{j},{k},{l}]') for i in obj.cities for j in obj.cities for k in obj.cities for l in obj.cities})
+        obj.Z = gp.tupledict(
+            {(i, j, k, l): obj.model.getVarByName(f'Z[{i},{j},{k},{l}]') for i in obj.cities for j in obj.cities for k
+             in obj.cities for l in obj.cities})
         return obj
 
     def create_objective(self):
         self.Y = self.model.addVars(self.N, self.N, vtype=GRB.BINARY, name="Y")
         self.Z = self.model.addVars(self.N, self.N, self.N, self.N, vtype=GRB.BINARY, name="Z")
 
-        obj = gp.LinExpr()
-        for (s, a), pkgs in self.f.items():
-            for h1 in self.cities:
-                for h2 in self.cities:
-                    if self.c:
-                        obj += pkgs * self.Z[s, h1, a, h2] * (
-                               (
-                                       self.d[(s, h1)] +
-                                       self.alpha * self.d[(h1, h2)]
-                                       + self.d[(h2, a)]
-                               ) +
-                               (
-                                       self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
-                               )
-                        )
-                    else:
-                        obj += pkgs * self.Z[s, h1, a, h2] * \
-                               (self.d[(s, h1)] + self.alpha * self.d[(h1, h2)] + self.d[(h2, a)])
+        if self.c:
+            obj = gp.quicksum(pkgs *
+                              gp.quicksum(self.Z[s, h1, a, h2] * (
+                                      (
+                                          self.d[(s, h1)] +
+                                          self.alpha * self.d[(h1, h2)] +
+                                          self.d[(h2, a)]
+                                      ) +
+                                      (
+                                          self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
+                                      )
+                              ) for h1 in self.cities for h2 in self.cities)
+                              for (s, a), pkgs in self.f.items())
+        else:
+            obj = gp.quicksum(pkgs *
+                              gp.quicksum(self.Z[s, h1, a, h2] * (
+                                      self.d[(s, h1)] +
+                                      self.alpha * self.d[(h1, h2)] +
+                                      self.d[(h2, a)]
+                              ) for h1 in self.cities for h2 in self.cities)
+                              for (s, a), pkgs in self.f.items())
+
+        # obj = gp.LinExpr()
+        # for (s, a), pkgs in self.f.items():
+        #     for h1 in self.cities:
+        #         for h2 in self.cities:
+        #             if self.c:
+        #                 obj += pkgs * self.Z[s, h1, a, h2] * (
+        #                         (
+        #                                 self.d[(s, h1)] +
+        #                                 self.alpha * self.d[(h1, h2)]
+        #                                 + self.d[(h2, a)]
+        #                         ) +
+        #                         (
+        #                                 self.c * (2 - self.Y[h1, s] - self.Y[h1, h2] - self.Y[h2, a])
+        #                         )
+        #                 )
+        #             else:
+        #                 obj += pkgs * self.Z[s, h1, a, h2] * \
+        #                        (self.d[(s, h1)] + self.alpha * self.d[(h1, h2)] + self.d[(h2, a)])
         self.model.setObjective(obj, GRB.MINIMIZE)
 
     def create_constraints(self):
@@ -102,7 +126,8 @@ class HubModel:
         for (s, a), pkgs in self.f.items():
             for h1 in self.cities:
                 for h2 in self.cities:
-                    total_c += self.Z[s, h1, a, h2].X * pkgs * (2 - self.Y[h1, s].X - self.Y[h1, h2].X - self.Y[h2, a].X)
+                    total_c += self.Z[s, h1, a, h2].X * pkgs * (
+                                2 - self.Y[h1, s].X - self.Y[h1, h2].X - self.Y[h2, a].X)
         print(f"Cost for this model is {total_c}*c")
         return total_c
 
