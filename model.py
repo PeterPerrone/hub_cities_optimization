@@ -75,7 +75,7 @@ class HubModel:
         for (s, a), pkgs in self.f.items():
             for h1 in self.cities:
                 for h2 in self.cities:
-                    total_c += pkgs * (2 - self.Y[h1, s].X - self.Y[h1, h2].X - self.Y[h2, a].X)
+                    total_c += self.Z[s, h1, a, h2].X * pkgs * (2 - self.Y[h1, s].X - self.Y[h1, h2].X - self.Y[h2, a].X)
         print(f"Cost for this model is {total_c}*c")
         return total_c
 
