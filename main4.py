@@ -13,7 +13,7 @@ for c1 in costs:
     hb.create_constraints()
     hb.optimize_model()
     hb.save_model()
-    obj_value.append(hb.calculate_costs())
+    obj_value.append(hb.calculate_num_intermediate_hubs())
 
 # Creating the line plot using Plotly
 fig = go.Figure(data=go.Scatter(x=[str(x) for x in costs], y=costs, mode='lines+markers', marker=dict(symbol='square')))

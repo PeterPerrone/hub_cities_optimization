@@ -105,19 +105,25 @@ class HubModel:
             if self.Y[i, i].X:
                 print(f"City {i} is a hub")
 
-    def calculate_costs(self):
-        total_c = 0
+    def calculate_num_intermediate_hubs(self):
+        total_int_hubs = 0
         for (s, a), pkgs in self.f.items():
-            flow_c = 2 - self.Y[s, s].X - self.Y[a, a].X
+            flow_int_hub = 2 - self.Y[s, s].X - self.Y[a, a].X
             for h in self.cities:
-                flow_c -= self.Z[s, h, a, h].X
-            total_c += pkgs * flow_c
-        print(f"Cost for this model is {total_c}*c")
-        return total_c
+                flow_int_hub -= self.Z[s, h, a, h].X
+            total_int_hubs += pkgs * flow_int_hub
+        print(f"Cost for this model is {total_int_hubs}*c")
+        return total_int_hubs
 
-    def cost_per_package(self):
-        total_cost = self.calculate_costs()
-        return total_cost / sum(self.f.values())
+    def avg_num_intermediate_hubs(self):
+        total_int_hubs = self.calculate_num_intermediate_hubs()
+        return total_int_hubs / sum(self.f.values())
+
+    def total_cost(self):
+        return self.c * self.calculate_num_intermediate_hubs()
+
+    def avg_cost_per_package(self):
+        return self.c * self.avg_num_intermediate_hubs()
 
     def save_model(self, fname=None):
         if not fname:
