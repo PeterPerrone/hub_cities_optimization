@@ -1,5 +1,5 @@
 # Solution for model Hub-Spoke-K2-C5
-# Objective value = 1.6517590148177847e+07
+# Objective value = 1.6517590148177845e+07
 Y[0,0] 0
 Y[0,1] 0
 Y[0,2] 0

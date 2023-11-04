@@ -106,23 +106,33 @@ class HubModel:
                 print(f"City {i} is a hub")
 
     def calculate_num_intermediate_hubs(self):
-        total_int_hubs = 0
+        total_packs_through_hubs = 0
         for (s, a), pkgs in self.f.items():
             flow_int_hub = 2 - self.Y[s, s].X - self.Y[a, a].X
             for h in self.cities:
                 flow_int_hub -= self.Z[s, h, a, h].X
-            total_int_hubs += pkgs * flow_int_hub
-        return total_int_hubs
+            total_packs_through_hubs += pkgs * flow_int_hub
+        return total_packs_through_hubs
 
-    def avg_num_intermediate_hubs(self):
-        total_int_hubs = self.calculate_num_intermediate_hubs()
-        return total_int_hubs / sum(self.f.values())
+    def avg_num_of_packages_through_intermediate_hubs(self):
+        total_packs_through_hubs = self.calculate_num_intermediate_hubs()
+        return total_packs_through_hubs / sum(self.f.values())
 
     def total_cost(self):
         return self.c * self.calculate_num_intermediate_hubs()
 
     def avg_cost_per_package(self):
-        return self.c * self.avg_num_intermediate_hubs()
+        return self.c * self.avg_num_of_packages_through_intermediate_hubs()
+
+    def total_distance_travelled_by_all_packages(self):
+        total_distance = 0
+        for (s, a), pkgs in self.f.items():
+            for h1 in self.cities:
+                for h2 in self.cities:
+                    total_distance += pkgs * self.Z[s, h1, a, h2].X * \
+                           (self.d[(s, h1)] + self.alpha * self.d[(h1, h2)] + self.d[(h2, a)])
+
+        return total_distance
 
     def save_model(self, fname=None):
         if not fname:
@@ -136,6 +146,7 @@ class HubModel:
             'N': self.N,
             'f': self.f,
             'd': self.d,
+            'c': self.c
         }
 
         with open(f"saved_models/{fname}.pkl", 'wb') as file:
