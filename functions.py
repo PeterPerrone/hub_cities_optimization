@@ -1,7 +1,6 @@
 from gurobipy import Model, GRB
 import pandas as pd
 import numpy as np
-import pickle
 
 
 # Guaranteed to get a valid size, since checked before calling this method
@@ -53,14 +52,4 @@ def extract_distances(df_cities, cities):
                 dists[(city1, city2)] = curr_dist
                 dists[(city2, city1)] = curr_dist
     return dists
-
-
-def save_hub_model(fname, hub_model):
-    with open(f"{fname}.pkl", "wb") as file:
-        pickle.dump(hub_model, file)
-
-
-def load_hub_model(fname):
-    with open(f"{fname}.pkl", "rb") as file:
-        return pickle.load(file)
 
