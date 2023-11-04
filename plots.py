@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from model import HubModel
+from functions import compute_p2p_cost
 
 
 class Plots:
@@ -153,3 +154,33 @@ class Plots:
 
         # Show figure
         fig.show()
+
+    def dist_obj_vs_p2p_costs(self, costs):
+        p2p_cost = compute_p2p_cost(self.model.f, self.model.d)
+        int_hubs = self.model.calculate_num_intermediate_hubs()
+        overhead_costs = [cost * int_hubs for cost in costs]
+        obj = self.model.get_obj_value()
+        obj_plus_costs = [oh_cost + obj for oh_cost in overhead_costs]
+        plt.plot(costs, overhead_costs, label="overhead-cost hub-spoke")
+        plt.plot(costs, obj_plus_costs, label="obj + overhead-cost hub-spoke")
+        plt.plot(costs, [p2p_cost] * len(costs), label="point-to-point (dist cost only)")
+        plt.xlabel("c")
+        plt.ylabel("total overhead costs")
+        plt.ticklabel_format(axis='y', style='plain')
+        plt.legend()
+        plt.title(f"Overhead costs in Hub vs. P2P distance (K={self.model.K})")
+        plt.savefig(f"plot_images/dist_cost_p2p_K{self.model.K}")
+        plt.show()
+
+    def dist_obj_vs_oh_costs(self, costs):
+        int_hubs = self.model.calculate_num_intermediate_hubs()
+        overhead_costs = [cost * int_hubs for cost in costs]
+        obj = self.model.get_obj_value()
+        plt.plot(costs, overhead_costs, label="overhead costs")
+        plt.plot(costs, [obj] * len(costs), label="dist objective value")
+        plt.xlabel("c")
+        plt.ylabel("total costs")
+        plt.ticklabel_format(axis='y', style='plain')
+        plt.title(f"Overhead Costs vs. Distance Cost in Distance only Obj (K={self.model.K})")
+        plt.savefig(f"plot_images/dist_vs_oh_cost_dist_obj_K{self.model.K}")
+        plt.show()

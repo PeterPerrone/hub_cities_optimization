@@ -85,8 +85,8 @@ class HubModel:
             for j in self.cities:
                 for k in self.cities:
                     for l in self.cities:
-                        self.model.addConstr(self.Z[i, j, k, l] <= self.Y[i, j], name=f"Linearization-at-most Y_{i, j}")
-                        self.model.addConstr(self.Z[i, j, k, l] <= self.Y[k, l], name=f"Linearization-at-most Y_{k, l}")
+                        self.model.addConstr(self.Z[i, j, k, l] <= self.Y[i, j], name=f"Linearization-at-most-Y_{i, j}")
+                        self.model.addConstr(self.Z[i, j, k, l] <= self.Y[k, l], name=f"Linearization-at-most-Y_{k, l}")
                         self.model.addConstr(self.Z[i, j, k, l] >= self.Y[i, j] + self.Y[k, l] - 1,
                                              name=f"Linearization-at-least-Y_{i, j}-and-Y_{k, l}_-_1")
 
@@ -112,7 +112,6 @@ class HubModel:
             for h in self.cities:
                 flow_int_hub -= self.Z[s, h, a, h].X
             total_int_hubs += pkgs * flow_int_hub
-        print(f"Cost for this model is {total_int_hubs}*c")
         return total_int_hubs
 
     def avg_num_intermediate_hubs(self):

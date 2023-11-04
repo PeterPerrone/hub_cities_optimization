@@ -53,3 +53,9 @@ def extract_distances(df_cities, cities):
                 dists[(city2, city1)] = curr_dist
     return dists
 
+
+def compute_p2p_cost(f, d):
+    cost = 0
+    for (s, a), pkgs in f.items():
+        cost += pkgs * d[(s, a)]
+    return cost
