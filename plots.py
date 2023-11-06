@@ -143,7 +143,7 @@ class Plots:
 
         # Set plot layout
         fig.update_layout(
-            title="Cities and Hub Map",
+            title=f"Cities and Hub Map (K={self.model.K})",
             xaxis_title="Longitude",
             yaxis_title="Latitude",
             showlegend=True,
@@ -155,7 +155,7 @@ class Plots:
         # Show figure
         fig.show()
 
-    def dist_obj_vs_p2p_costs(self, costs):
+    def dist_obj_vs_p2p_costs(self, costs, show=True):
         p2p_cost = compute_p2p_cost(self.model.f, self.model.d)
         int_hubs = self.model.calculate_num_intermediate_hubs()
         overhead_costs = [cost * int_hubs for cost in costs]
@@ -168,11 +168,13 @@ class Plots:
         plt.ylabel("total overhead costs")
         plt.ticklabel_format(axis='y', style='plain')
         plt.legend()
-        plt.title(f"Overhead costs in Hub vs. P2P distance (K={self.model.K})")
-        plt.savefig(f"plot_images/dist_cost_p2p_K{self.model.K}")
-        plt.show()
+        plt.title(f"Overhead costs in Hub vs. P2P distance (K={self.model.K}, a={self.model.alpha})")
+        plt.savefig(f"plot_images/dist_cost_p2p_K{self.model.K}_a{self.model.alpha}.png")
+        plt.close()
+        if show:
+            plt.show()
 
-    def dist_obj_vs_oh_costs(self, costs):
+    def dist_obj_vs_oh_costs(self, costs, show=True):
         int_hubs = self.model.calculate_num_intermediate_hubs()
         overhead_costs = [cost * int_hubs for cost in costs]
         obj = self.model.get_obj_value()
@@ -181,6 +183,8 @@ class Plots:
         plt.xlabel("c")
         plt.ylabel("total costs")
         plt.ticklabel_format(axis='y', style='plain')
-        plt.title(f"Overhead Costs vs. Distance Cost in Distance only Obj (K={self.model.K})")
-        plt.savefig(f"plot_images/dist_vs_oh_cost_dist_obj_K{self.model.K}")
-        plt.show()
+        plt.title(f"Overhead Costs vs. Distance Cost in Distance only Obj (K={self.model.K}, a={self.model.alpha})")
+        plt.savefig(f"plot_images/dist_vs_oh_cost_dist_obj_K{self.model.K}_a{self.model.alpha}.png")
+        plt.close()
+        if show:
+            plt.show()
