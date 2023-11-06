@@ -6,3 +6,6 @@ venv/
 
 #pychache
 __pycache__/
+
+# notebook checkpoints
+.ipynb_checkpoints/
